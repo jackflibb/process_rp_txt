@@ -42,17 +42,20 @@ if(!require(pracma)){
 	install.packages('pracma',repos=osuRepo)
 }
 library(pracma)
-
+if(!require(stringr)){
+	install.packages('stringr',repos=osuRepo)
+}
+library(stringr)
 #
 # Directories
 #	!!: Make sure the directories below exist. This script will not make them.
 #
 # base directory for subjects
-subjsDir<-'/Volumes/research/tds/subjects_flux' 
+subjsDir<-'/home/research/tds/subjects_flux' 
 # requires trailing '/' - this is the path to prepend to output pdf filename. 
-motionPDFdir<-'/Volumes/research/tds/motion_QC/test/' 
+motionPDFdir<-'/home/research/tds/motion_QC/test/' 
 # requires trailing '/' - this is where the augmented rp_*txt files go
-motion_rp_txt_dir<-'/Volumes/research/tds/motion_QC/test/rp_txt/'
+motion_rp_txt_dir<-'/home/research/tds/motion_QC/test/rp_txt/'
 
 #/Volumes/research/tds/subjects_flux/
 
@@ -121,7 +124,7 @@ TRASH_REGRESSOR = TRUE
 #For example `(raw_trans_deriv > 2)` would check each of the x, y, and z
 #translational derivatives, and if any are over 2mm, would put a 1 in the
 #trash regressor column, and a 0 otherwise.  
-trash_expression<-'(raw_trans_deriv < 2) & (raw_rot_deriv < 10) | (euclidian_rot_deriv < 1)'
+trash_expression<-'(raw_trans_deriv > 2) & (raw_rot_deriv > 10) | (euclidian_rot_deriv > 1)'
 #
 ##########################
 
@@ -181,36 +184,40 @@ if(RP_EXPORT){
 		filter(include) %>% select(varname) %>% unlist %>% as.character
 }
 
-# if(TRASH_REGRESSOR){
-# 	trash_sub_table<-data.frame(
-# 		raw=regmatches(
-# 			trash_expression,
-# 			gregexpr('\\w+ *[<=>]+ *[0-9]+',trash_expression))[[1]]) %>%
-# 		mutate(operator=sub('.*([<=>]).*','\\1',raw)) %>%
-# 		separate(raw,c('var','num'),sep=' *[<=>] *',remove=F)
+if(TRASH_REGRESSOR){
+	trash_sub_table<-data.frame(
+		raw=regmatches(
+			trash_expression,
+			gregexpr('\\w+ *[<=>]+ *[0-9]+',trash_expression))[[1]]) %>%
+		mutate(operator=sub('.*([<=>]).*','\\1',raw)) %>%
+		separate(raw,c('var','num'),sep=' *[<=>] *',remove=F)
 
-# 	if (!all(trash_sub_table$var %in% c(
-# 		as.character(VAR_TO_OPTION_TABLE$option_name),
-# 		as.character(VAR_TO_OPTION_TABLE$varname)))) stop("Trash expression not valid: can't find some variable name")
-# 	subs<-trash_sub_table %>% group_by(raw) %>%
-# 		do({
-# 			var<-.$var
-# 			operator<-.$operator
-# 			num<-.$num
-# 			expressions<-VAR_TO_OPTION_TABLE %>% 
-# 				filter(option_name %in% var) %>%
-# 				select(varname) %>% 
-# 				unlist %>% 
-# 				paste(operator,num)
-# 				expressions_collapsed<-paste('(',paste(expressions,collapse=' | '),')')
-# 			data_frame(expression=expressions_collapsed)
-# 		})
-# 	str_replace_all(trash_expression,as.character(subs$raw),subs$expression)
+	if (!all(trash_sub_table$var %in% c(
+		as.character(VAR_TO_OPTION_TABLE$option_name),
+		as.character(VAR_TO_OPTION_TABLE$varname)))) stop("Trash expression not valid: can't find some variable name")
+	subs<-trash_sub_table %>% group_by(raw) %>%
+		do({
+			var<-.$var
+			operator<-.$operator
+			num<-.$num
+			expressions<-VAR_TO_OPTION_TABLE %>% 
+				filter(option_name %in% var) %>%
+				select(varname) %>% 
+				unlist %>% 
+				paste(operator,num)
+				expressions_collapsed<-paste('(',paste(expressions,collapse=' | '),')')
+			data_frame(expression=expressions_collapsed)
+		})
 
-# 	VAR_TO_OPTION_TABLE %>% 
-# 		filter(option_name %in% trash_sub_table$var) %>%
-# 		select(varname) %>% unlist %>% paste(trash_sub_table$operator,trash_sub_table$num)
-# }
+	named_expressions<-subs$expression
+	names(named_expressions)<-subs$raw
+
+	tformd_trash_expression<-str_replace_all(trash_expression,named_expressions)
+	cat(paste0("\n\nUsing this expression for trash regressor:\n",
+		tformd_trash_expression,"\n\n"))
+
+	param_names_for_rp_write<-c(param_names_for_rp_write,'trash')
+}
 
 # Functions
 
@@ -340,6 +347,10 @@ rawmotion<-data.frame(rp_file=list.files(recursive=T,pattern='^rp_.*\\.txt')) %>
 	group_by(rp_file) %>%
 	mutate(vol_num=1:n())
 
+if(TRASH_REGRESSOR){
+	rawmotion<-rawmotion %>%
+		mutate_(trash=paste0('as.numeric(',tformd_trash_expression,')'))
+}
 
 if(RP_EXPORT){
 	rp_files_written<-rawmotion %>% 
@@ -382,11 +393,7 @@ write.csv(
   file=paste(motionPDFdir,'summary_by_subject_by_run.csv',sep=''),
   row.names=F)
 
-ggsave(
-  file=paste(motionPDFdir,'displacement_hist-all_subjs.pdf',sep=''),
-  width=17,
-  height=22,
-  units="in")
+
 
 motionWrittenToFile<-rawmotion %>% 
 ungroup() %>%
@@ -397,15 +404,22 @@ do(
 	RmdFile=knit_a_bit(.))
 
 deriv_trans_plot<-rawmotion %>%
-ggplot(aes(x=deriv_trans))+
-geom_histogram(binwidth=.05,fill='red',alpha=.6)+
-facet_grid(subject~run)+
-coord_cartesian(x=c(-1.5,1.5))+
-theme(
-	panel.background=element_rect(fill='white'),
-	axis.text=element_text(size=6),
-	axis.text.x=element_text(angle=270))+
-labs(
-	x='Volume-to-volume differences in absolute distance from first image (mm)',
-	y='Count',
-	title='Histograms of Between-Volume Motion by Participant and by Run')
+	ggplot(aes(x=deriv_trans))+
+	geom_histogram(binwidth=.05,fill='red',alpha=.6)+
+	facet_grid(subject~run)+
+	coord_cartesian(x=c(-1.5,1.5))+
+	theme(
+		panel.background=element_rect(fill='white'),
+		axis.text=element_text(size=6),
+		axis.text.x=element_text(angle=270))+
+	labs(
+		x='Volume-to-volume differences in absolute distance from first image (mm)',
+		y='Count',
+		title='Histograms of Between-Volume Motion by Participant and by Run')
+
+ggsave(
+	deriv_trans_plot,
+	file=paste(motionPDFdir,'displacement_hist-all_subjs.pdf',sep=''),
+	width=17,
+	height=22,
+	units="in")
