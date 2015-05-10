@@ -11,12 +11,36 @@
 
 #If you don't have the following packages installed, use the install.packages("package") command for each one
 
+osuRepo<-'http://ftp.osuosl.org/pub/cran/'
+
 #####
+if(!require(knitr)){
+	install.packages('knitr',repos=osuRepo)
+}
 library(knitr)
+if(!require(rmarkdown)){
+	install.packages('rmarkdown',repos=osuRepo)
+}
 library(rmarkdown)
+if(!require(dplyr)){
+	install.packages('dplyr',repos=osuRepo)
+}
 library(dplyr) # Great help for this package at http://cran.rstudio.com/web/packages/dplyr/vignettes/introduction.html
+if(!require(tidyr)){
+	install.packages('tidyr',repos=osuRepo)
+}
+library(tidyr)
+if(!require(reshape2)){
+	install.packages('reshape2',repos=osuRepo)
+}
 library(reshape2)
+if(!require(ggplot2)){
+	install.packages('ggplot2',repos=osuRepo)
+}
 library(ggplot2)
+if(!require(pracma)){
+	install.packages('pracma',repos=osuRepo)
+}
 library(pracma)
 
 #
@@ -93,15 +117,16 @@ euclidian_rot_deriv = FALSE
 ## Trash regressor options
 #
 TRASH_REGRESSOR = TRUE
-#`trash_expression` is a logical expression using the variable names above.
+#`trash_expression` is a logical expression using *only* the variable names above.
 #For example `(raw_trans_deriv > 2)` would check each of the x, y, and z
 #translational derivatives, and if any are over 2mm, would put a 1 in the
 #trash regressor column, and a 0 otherwise.  
-trash_expression<-'(raw_trans_deriv > 2)'
+trash_expression<-'(raw_trans_deriv < 2) & (raw_rot_deriv < 10) | (euclidian_rot_deriv < 1)'
 #
 ##########################
 
 
+	
 
 ####################################
 # Dragons Below          ######
@@ -157,13 +182,34 @@ if(RP_EXPORT){
 }
 
 # if(TRASH_REGRESSOR){
-	
-# 	sub(
-# 		'(\\w+)',
-# 		paste0(VAR_TO_OPTION_TABLE %>% filter(option_name=='\\1')),
-# 		trash_expression)
-# 	trash_expression<-paste0('as.numeric(',trash_expression,')')
-# 	param_names_for_rp_write<-c(param_names_for_rp_write,'trash')
+# 	trash_sub_table<-data.frame(
+# 		raw=regmatches(
+# 			trash_expression,
+# 			gregexpr('\\w+ *[<=>]+ *[0-9]+',trash_expression))[[1]]) %>%
+# 		mutate(operator=sub('.*([<=>]).*','\\1',raw)) %>%
+# 		separate(raw,c('var','num'),sep=' *[<=>] *',remove=F)
+
+# 	if (!all(trash_sub_table$var %in% c(
+# 		as.character(VAR_TO_OPTION_TABLE$option_name),
+# 		as.character(VAR_TO_OPTION_TABLE$varname)))) stop("Trash expression not valid: can't find some variable name")
+# 	subs<-trash_sub_table %>% group_by(raw) %>%
+# 		do({
+# 			var<-.$var
+# 			operator<-.$operator
+# 			num<-.$num
+# 			expressions<-VAR_TO_OPTION_TABLE %>% 
+# 				filter(option_name %in% var) %>%
+# 				select(varname) %>% 
+# 				unlist %>% 
+# 				paste(operator,num)
+# 				expressions_collapsed<-paste('(',paste(expressions,collapse=' | '),')')
+# 			data_frame(expression=expressions_collapsed)
+# 		})
+# 	str_replace_all(trash_expression,as.character(subs$raw),subs$expression)
+
+# 	VAR_TO_OPTION_TABLE %>% 
+# 		filter(option_name %in% trash_sub_table$var) %>%
+# 		select(varname) %>% unlist %>% paste(trash_sub_table$operator,trash_sub_table$num)
 # }
 
 # Functions
