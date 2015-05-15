@@ -1,5 +1,7 @@
 #author: john flournoy
 #email: flournoy@uoregon.edu
+#version: 0.1
+#date: 2015-05-13
 #
 # This script takes the rp text files generated during realignment and calculates Euclidian composite scores for X,Y,Z 
 # translation and pitch, yaw, roll rotation. It generates a .csv file with the following variables for each run: 
