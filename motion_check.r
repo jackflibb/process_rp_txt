@@ -71,8 +71,11 @@ motion_rp_txt_dir<-'/home/research/tds/motion_QC/test/rp_txt/'
 # "t165/ppc/functionals/vid2/rp_vid2_0001.txt" in its entirety, but the 
 # parentheses will allow us to pick out just the 't165'.
 #
-sid_regex<-'^(t[0-9]{3})/.*txt' #add regular expression for subject ID between the `()`
-rid_regex<-'^.*rp_(.*)_[0-9]{4}.*txt' #add regular expression for run ID between `()`
+# This regular expression needs to match the entirety of the file list.
+# So, for example, to get the 't2' out of "s096/t2/ppc/rp_b_t2_self_001.txt" you'd need
+# something like rid_regex <- '.*rp_b_(t[1-3])_.*.txt'
+sid_regex<-'^(t[0-9]{3})/.*txt$' #add regular expression for subject ID between the `()`
+rid_regex<-'^.*rp_b_(t[1-3])_.*.txt$' #add regular expression for run ID between `()`
 
 #
 # Document options
