@@ -53,13 +53,12 @@ library(stringr)
 #	!!: Make sure the directories below exist. This script will not make them.
 #
 # base directory for subjects
-subjsDir<-'/home/research/tds/subjects_flux' 
+subjsDir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/archive/ppc' 
 # requires trailing '/' - this is the path to prepend to output pdf filename. 
-motionPDFdir<-'/home/research/tds/motion_QC/test/' 
+motionPDFdir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/notes/motion_QC/' 
 # requires trailing '/' - this is where the augmented rp_*txt files go
-motion_rp_txt_dir<-'/home/research/tds/motion_QC/test/rp_txt/'
+motion_rp_txt_dir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/notes/motion_QC/rp_txt/'
 
-#/Volumes/research/tds/subjects_flux/
 
 #
 # Extracting Subject and Run ids
@@ -71,11 +70,8 @@ motion_rp_txt_dir<-'/home/research/tds/motion_QC/test/rp_txt/'
 # "t165/ppc/functionals/vid2/rp_vid2_0001.txt" in its entirety, but the 
 # parentheses will allow us to pick out just the 't165'.
 #
-# This regular expression needs to match the entirety of the file list.
-# So, for example, to get the 't2' out of "s096/t2/ppc/rp_b_t2_self_001.txt" you'd need
-# something like rid_regex <- '.*rp_b_(t[1-3])_.*.txt'
-sid_regex<-'^(t[0-9]{3})/.*txt$' #add regular expression for subject ID between the `()`
-rid_regex<-'^.*rp_b_(t[1-3])_.*.txt$' #add regular expression for run ID between `()`
+sid_regex<-'^(s[0-9]{3})/.*txt' #add regular expression for subject ID between the `()`
+rid_regex<-'^.*rp_b_(.*)_self_[0-9]{3}.*txt' #add regular expression for run ID between `()`
 
 #
 # Document options
@@ -105,22 +101,22 @@ raw_rot = FALSE
 # units: mm
 raw_trans_deriv = FALSE
 raw_rot_deriv = FALSE
-# These next four ar the same as the above 4 but detrended with `detrend`
+# These next four are the same as the above 4 but detrended with `detrend`
 # units: mm
-dt_raw_trans = TRUE
-dt_raw_rot = TRUE
-dt_raw_trans_deriv = TRUE
-dt_raw_rot_deriv = TRUE
+dt_raw_trans = FALSE
+dt_raw_rot = FALSE
+dt_raw_trans_deriv = FALSE
+dt_raw_rot_deriv = FALSE
 # Absolute displacement, calc'd below
 # units: mm
-euclidian_trans = FALSE
+euclidian_trans = TRUE
 # This is proportional to absolute rotation, calc'd below
 # units: mm
-euclidian_rot = FALSE
+euclidian_rot = TRUE
 # These next two are the volume to volume differences in the above two
 # units: mm
-euclidian_trans_deriv = FALSE
-euclidian_rot_deriv = FALSE
+euclidian_trans_deriv = TRUE
+euclidian_rot_deriv = TRUE
 #
 ## Trash regressor options
 #
@@ -129,9 +125,9 @@ TRASH_REGRESSOR = TRUE
 #For example `(raw_trans_deriv > 2)` would check each of the x, y, and z
 #translational derivatives, and if any are over 2mm, would put a 1 in the
 #trash regressor column, and a 0 otherwise.  
-trash_expression<-'(raw_trans_deriv > 2) & (raw_rot_deriv > 10) | (euclidian_rot_deriv > 1)'
-#
-##########################
+#trash_expression<-'(raw_trans_deriv > 2) & (raw_rot_deriv > 10) | (euclidian_rot_deriv > 1)'
+trash_expression<-'(euclidian_trans_deriv < -1 ) | (euclidian_rot_deriv < -1) | (euclidian_trans_deriv > 1 ) | (euclidian_rot_deriv > 1)'
+###################################
 
 
 	
@@ -193,7 +189,7 @@ if(TRASH_REGRESSOR){
 	trash_sub_table<-data.frame(
 		raw=regmatches(
 			trash_expression,
-			gregexpr('\\w+ *[<=>]+ *[0-9]+',trash_expression))[[1]]) %>%
+			gregexpr('\\w+ *[<=>]+ *[-0-9]+',trash_expression))[[1]]) %>%
 		mutate(operator=sub('.*([<=>]).*','\\1',raw)) %>%
 		separate(raw,c('var','num'),sep=' *[<=>] *',remove=F)
 
