@@ -53,11 +53,11 @@ library(stringr)
 #	!!: Make sure the directories below exist. This script will not make them.
 #
 # base directory for subjects
-subjsDir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/archive/ppc' 
+subjsDir<-'/home/research/tds/subjects_G80' 
 # requires trailing '/' - this is the path to prepend to output pdf filename. 
-motionPDFdir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/notes/motion_QC/' 
+motionPDFdir<-'/home/research/tds/notes/motion_QC_G80/' 
 # requires trailing '/' - this is where the augmented rp_*txt files go
-motion_rp_txt_dir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/notes/motion_QC/rp_txt/'
+motion_rp_txt_dir<-'/home/research/tds/notes/motion_QC_G80/rp_txt/'
 
 
 #
@@ -70,8 +70,8 @@ motion_rp_txt_dir<-'/Volumes/research/dsnlab/Studies/SFIC_Self3/notes/motion_QC/
 # "t165/ppc/functionals/vid2/rp_vid2_0001.txt" in its entirety, but the 
 # parentheses will allow us to pick out just the 't165'.
 #
-sid_regex<-'^(s[0-9]{3})/.*txt' #add regular expression for subject ID between the `()`
-rid_regex<-'^.*rp_b_(.*)_self_[0-9]{3}.*txt' #add regular expression for run ID between `()`
+sid_regex<-'^(t[0-9]{3})/.*txt' #add regular expression for subject ID between the `()`
+rid_regex<-'^t[0-9]{3}/ppc/functionals/(\\w+)/.*txt' #add regular expression for run ID between `()`
 
 #
 # Document options
