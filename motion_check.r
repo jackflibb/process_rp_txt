@@ -55,9 +55,9 @@ library(stringr)
 # base directory for subjects
 subjsDir<-'/home/research/tds/subjects_G80' 
 # requires trailing '/' - this is the path to prepend to output pdf filename. 
-motionPDFdir<-'/home/research/tds/notes/motion_QC_G80/' 
+motionPDFdir<-'/home/research/tds/motion_QC/G80_2/' 
 # requires trailing '/' - this is where the augmented rp_*txt files go
-motion_rp_txt_dir<-'/home/research/tds/notes/motion_QC_G80/rp_txt/'
+motion_rp_txt_dir<-'/home/research/tds/motion_QC/G80_2/rp_txt/'
 
 
 #
