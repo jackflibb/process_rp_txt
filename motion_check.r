@@ -55,9 +55,9 @@ library(stringr)
 # base directory for subjects
 subjsDir<-'/home/research/tds/subjects_G80' 
 # requires trailing '/' - this is the path to prepend to output pdf filename. 
-motionPDFdir<-'/home/research/tds/motion_QC/G80_2/' 
+motionPDFdir<-'/home/research/tds/motion_QC/G80/' 
 # requires trailing '/' - this is where the augmented rp_*txt files go
-motion_rp_txt_dir<-'/home/research/tds/motion_QC/G80_2/rp_txt/'
+motion_rp_txt_dir<-'/home/research/tds/motion_QC/G80/rp_txt/'
 
 
 #
@@ -404,9 +404,9 @@ group_by(subject) %>%
 do(
 	RmdFile=knit_a_bit(.))
 
-deriv_trans_plot<-rawmotion %>%
+deriv_trans_plot<-rawmotion %>% ungroup %>%
 	ggplot(aes(x=deriv_trans))+
-	geom_histogram(binwidth=.05,fill='red',alpha=.6)+
+	geom_histogram(binwidth=.075,fill='red',alpha=.6)+
 	facet_grid(subject~run)+
 	coord_cartesian(x=c(-1.5,1.5))+
 	theme(
